@@ -2,14 +2,14 @@
 
 Applications with safety requirements have become ubiquitous nowadays and can be found in edge devices of all kinds. However, microcontrollers in those devices, despite offering moderate performance by implementing multicores and cache hierarchies, may fail to offer adequate support to implement some safety measures needed for the highest integrity levels, such as lockstepped execution to avoid so-called common cause failures (i.e., a fault affecting redundant components causing the same error in all of them). To respond to this limitation, an approach based on a software monitor enforcing some sort of software-based lockstepped execution across cores has been proposed recently, providing a proof of concept. This paper presents SafeSoftDR, a library providing a standard interface to deploy software-based lockstepped execution across non-natively lockstepped cores relieving end-users from having to manage the burden to create redundant processes, copying input/output data, and performing result comparison. Our library has been tested on x86-based Linux and is currently being integrated on top of an open-source RISC-V platform targeting safety-related applications, hence offering a convenient environment for safety-critical applications.
 
+## Reference
+
+If you use the SafeSoftDR for an academic purpose, please cite the following paper:
+
 "SafeSoftDR: A Library to Enable Software-based Diverse Redundancy for Safety-Critical Tasks" (to appear)
 Fabio Mazzocchetti, Sergi Alcaide, Francisco Bas, Pedro Benedicte, Guillem Cabo, Feng Chang, Francisco Fuentes, Jaume Abella
 FORECAST 2022 Functional Properties and Dependability in Cyber-Physical Systems Workshop (held jointly with HiPEAC Conference)
 Budapest (Hungary), June 21 2022
-
-## Reference
-
-If you use the SafeSoftDR for an academic purpose, please cite the following paper:
 
 ```
 @misc{https://doi.org/10.48550/arxiv.2210.00833,
