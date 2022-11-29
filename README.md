@@ -7,6 +7,10 @@ Fabio Mazzocchetti, Sergi Alcaide, Francisco Bas, Pedro Benedicte, Guillem Cabo,
 FORECAST 2022 Functional Properties and Dependability in Cyber-Physical Systems Workshop (held jointly with HiPEAC Conference)
 Budapest (Hungary), June 21 2022
 
+## Reference
+
+If you use the SafeSoftDR for an academic purpose, please cite the following paper:
+
 ```
 @misc{https://doi.org/10.48550/arxiv.2210.00833,
   doi = {10.48550/ARXIV.2210.00833},
