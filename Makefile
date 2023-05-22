@@ -14,7 +14,7 @@ ifneq ($(BIND),no)
 	OPTIONS+=-Dbinding 
 endif
 
-OPTIONS=-static -Dbinding -Dscheduler
+OPTIONS=-static -Dbinding -Dscheduler -std=c++11
 
 OBJ_FOLDER=	./obj
 SRC_FOLDER=	./src

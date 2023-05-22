@@ -24,6 +24,13 @@ Budapest (Hungary), June 21 2022
 }
 
 ```
+## Levels of protection:
+
+Different levels of protection are offered by the library based on the ```protect``` call you use:
+ - **protect_def**: Executes a staggered execution in two cores, saves the result of one of them.
+ - **protect_def_out**: Executes a staggered execution in two cores, compares the outputs and saves the result of one of them if fault free.
+ - **protect_def_inp**: Duplicates the input of the calling functions and executes a staggered execution in two cores, saves the result of one of them.
+ - **protect_def_inp_out**: Duplicates the input of the calling functions and executes a staggered execution in two cores, compares the results and saves the result of one of them if fault free.
 
 ## Compiling
 
@@ -37,20 +44,21 @@ In order to cross-compile the library (for example in an x86 computer)
 
 	TARGET=cross make
 
-### Compiling the demo
+### Compiling the example
 
 Compile the library using
 
-	make demo
+	make example
 
 In order to cross-compile the library (for example in an x86 computer)
 
-	TARGET=cross make demo
+	TARGET=cross make example
 
-## Running
-To run the demo simply execute bin/demo on a RISC-V Linux machine with perf support. To enable perf support, add the following line to your kernel configuration:
+## Running the example
+To run the example simply execute bin/example on a RISC-V Linux machine with perf support. To enable perf support, add the following line to your kernel configuration:
 
 	CONFIG_PERF_EVENTS=y
+
 
 ## Prequisites
 
@@ -59,4 +67,6 @@ Just the start_scheduler, the end_scheduler should remain SCHED_OTHER (default o
 
 The defines of binding and scheduling put into effect in worker.cc functions.
 
-Perf configuration bit, mask ecc is in worker.cc .
+Perf configuration bit, mask ecc is in worker.cc.
+
+For some machines performance counter access may require to call ```sudo``` in front of the execution command
