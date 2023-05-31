@@ -206,7 +206,7 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 	trail.enablePMC_at(trail.getFD(instructions));
 	
 	/*
-	* The staggering is produce only in the monitoring section of the monitor.
+	* The staggering is produced only in the monitoring section of the monitor.
 	* There is not staggering at the start of the execution of head and trail process.
 	* If you want add the while in the same portion of code, in protect_real_waitpid_selene().
 	*/
@@ -223,6 +223,12 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 	((unsigned char *)shmem)[3]= 0x1;
 	trail.resetPMC_at(trail.getFD(instructions));
 
+	/*
+	* TIMEOUT COUNTERS VARIABLES
+	*/
+	std::chrono::time_point<std::chrono::high_resolution_clock> HeadTimeoutCounter = std::chrono::system_clock::now();
+	std::chrono::time_point<std::chrono::high_resolution_clock> TrailTimeoutCounter = std::chrono::system_clock::now();
+	
 	monitor.setScheduler(SCHEDULER_START);
 	
 	#ifdef demo
@@ -253,7 +259,32 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 			* both alive
 			*/
 			if( hv_tv[0] == 0x00 AND hv_tv[1] == 0x00 ){
-		
+
+				//CHECK IF PROGRESS FOR TIMEOUT
+				std::chrono::time_point<std::chrono::high_resolution_clock> Now = std::chrono::system_clock::now();
+				if (head.getHWInstruction(head.getFD(instructions)) == 0){
+					//no progress check timeout:
+					//if timeout bigger than threshold kill process message timeout and exit
+					if (Now - HeadTimeoutCounter >= TIMEOUT_THRESHOLD){
+						cout << "TIMEOUT reached for HEAD process" << endl;
+						printf("Timeout HEAD");
+					}
+					//else do nothing
+				}
+				else{//progress made, renew timeout counter
+					HeadTimeoutCounter = std::chrono::system_clock::now(); 
+				}
+				if (trail.getHWInstruction(trail.getFD(instructions)) == 0){
+					//no progress check timeout:
+					//if timeout bigger than threshold kill process message timeout and exit
+					if (Now - TrailTimeoutCounter >= TIMEOUT_THRESHOLD){
+						cout << "TIMEOUT reached for TRAIL process" << endl;
+					}
+					//else do nothing
+				}
+				else{//progress made, renew timeout counter
+					TrailTimeoutCounter = std::chrono::system_clock::now(); 
+				}
 				read_add_reset(&instructions_head_trail[0] ,&head,&trail);
 				sub = instructions_head_trail[0] - instructions_head_trail[1];
 				
