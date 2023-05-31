@@ -320,8 +320,22 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 						waitpid(trail_pid, &trail_status, WNOHANG);
 						if (WIFEXITED(trail_status) AND hv_tv[1] == 0) endWorker(&time_shared[2] , &hv_tv[1]);
 					}
-					read_add_reset(&instructions_head_trail[0] ,&head,&trail);				
+					read_add_reset(&instructions_head_trail[0] ,&head,&trail);
+
 					while((instructions_head_trail[0] - instructions_head_trail[1]) < WINDOWS_INSTRUCTION ){
+						//CHECK IF PROGRESS FOR TIMEOUT
+						std::chrono::time_point<std::chrono::high_resolution_clock> Now = std::chrono::system_clock::now();
+						if (head.getHWInstruction(head.getFD(instructions)) == 0){
+							//no progress check timeout:
+							//if timeout bigger than threshold kill process message timeout and exit
+							if (Now - HeadTimeoutCounter >= TIMEOUT_THRESHOLD){
+								cout << "TIMEOUT reached for HEAD process" << endl;
+							}
+						//else do nothing
+						}
+						else{//progress made, renew timeout counter
+							HeadTimeoutCounter = std::chrono::system_clock::now(); 
+						}
 
 						instructions_head_trail[0] +=  head.getHWInstruction(head.getFD(instructions));
 						head.resetPMC_at(head.getFD(instructions));
