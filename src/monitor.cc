@@ -267,7 +267,6 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 					//if timeout bigger than threshold kill process message timeout and exit
 					if (Now - HeadTimeoutCounter >= TIMEOUT_THRESHOLD){
 						cout << "TIMEOUT reached for HEAD process" << endl;
-						printf("Timeout HEAD");
 					}
 					//else do nothing
 				}
