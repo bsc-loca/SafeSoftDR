@@ -18,6 +18,7 @@ OPTIONS=-static -Dbinding -Dscheduler -std=c++11
 
 OBJ_FOLDER=	./obj
 SRC_FOLDER=	./src
+DOCS_FOLDER= ./docs
 BIN_FOLDER=	./bin
 
 all:example 
@@ -95,14 +96,17 @@ demoexample: libdemo
 	$(SRC_FOLDER)/example.cc \
 	$(OBJ_FOLDER)/lib.a
 
-
 demo: libdemo
 	$(CC) $(OPTIONS) -O0 -o $(BIN_FOLDER)/demo \
 	$(SRC_FOLDER)/demo.cc \
 	$(OBJ_FOLDER)/lib.a
 
+docs:
+	doxygen Doxyfile
+	cd ./docs/latex && make all
 
 .PHONY: clean
 clean:
-	rm $(OBJ_FOLDER)/*
-	rm $(BIN_FOLDER)/*
+	rm -f $(OBJ_FOLDER)/*
+	rm -f $(BIN_FOLDER)/*
+	rm -fr $(DOCS_FOLDER)

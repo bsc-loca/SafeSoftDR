@@ -25,8 +25,6 @@
 #define RUN 0
 #define STALL 1
 
-
-//#define SCHEDULER_START SCHED_FIFO
 #define SCHEDULER_START SCHED_OTHER
 #define SCHEDULER_END SCHED_OTHER
 
@@ -36,7 +34,7 @@
 #define OR ||
 
 #define ARGV_SIZE 64
-/*
+/**
 *	Input and Output data structure
 */
 void * input_share_head[ARGV_SIZE];
@@ -44,37 +42,39 @@ void * input_share_trail[ARGV_SIZE];
 void * out_share_head[ARGV_SIZE] ;
 void * out_share_trail[ARGV_SIZE] ;
 
-// Defines how apart (in number of instructions executed) each copy of the program should be running
+/**
+ * @brief Defines how apart (in number of instructions executed) each copy of the program should be running
+ */
 long long WINDOWS_INSTRUCTION = 50000;
 
-//std::chrono::milliseconds TIMEOUT_THRESHOLD = 10ms;
+//std::chrono::milliseconds TIMEOUT_THRESHOLD = 20ms;
+/**
+ * @brief Timeout threshold to consider an execution hang. Starts the timing when monitor does not see an progress in the instruction counters
+ * 
+ */
 std::chrono::milliseconds TIMEOUT_THRESHOLD = std::chrono::milliseconds(20);
 
 typedef enum { NODUP, DUP } in_mode;
 int i_stack = -1;
 
-/*
-	shmen
-	shmem[0] ready head
-	shmem[1] ready trail
-	
-	shmem[2] active waiting before execute head
-	shmem[3] active waiting before execute trail
-
-	shmem[4] finish execution head
-	shmem[5] finish execution trail
-*/
-
+/**
+ * @brief Piece of global memory used to communicate the Monitor and the Workers processes
+	shmem[0] Flag that to indicate the Monitor that Head core is ready to start \n
+	shmem[1] Flag that to indicate the Monitor that Trail core is ready to start \n
+	shmem[2] Used to perform an active waiting before execution on Head \n
+	shmem[3] Used to perform an active waiting before execution on Trail \n
+	shmem[4] Activated when Trail finished its execution \n
+	shmem[5] Activated when Head finished its execution \n
+ */ 
 void * shmem ; 
 
+/** @brief Struct used to return a summary of the execution */
 typedef struct pro_res{
-
-	bool safe;
-	long long head_ns;
-	long long trail_ns;
-	long long head_instr;
-	long long trail_instr;
-
+	bool safe; /** 0 if correct and compared, 1 otherwise */
+	long long head_ns; /***/
+	long long trail_ns; /***/
+	long long head_instr; /** Number of instructions commited during the activation by head core */
+	long long trail_instr; /** Number of instructions commited during the activation by trail core */
 }pro_res;
 
 pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] ),void * argv_input_head[] ,void * argv_input_trail[] ,int * input_size[] ,void * argv_output_head[] ,void * argv_output_trail[] ,int * output_size[]);
@@ -94,8 +94,6 @@ bool protect_def_out(void(* function )(void * [], void * [] ), void * argv_input
 bool protect_def_inp(void(* function )(void * [], void * [] ), void * argv_input[] ,int * input_size[] , void * argv_output[] , int * output_size[]);
 bool protect_def_out_inp(void(* function )(void * [], void * [] ), void * argv_input[] ,int * input_size[] , void * argv_output[] , int * output_size[]);
 bool protect_def_inp_out(void(* function )(void * [], void * [] ), void * argv_input[] ,int * input_size[] , void * argv_output[] , int * output_size[]);
-
-
 
 
 /*

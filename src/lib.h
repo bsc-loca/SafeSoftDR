@@ -11,12 +11,6 @@
 #ifndef LIB_H
 #define LIB_H
 
-
-typedef struct pro{
-
-}pro;
-
-
 /*direct
 	
 	the output result is the head output result as default

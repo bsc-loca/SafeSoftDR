@@ -61,9 +61,6 @@ class worker {
 		int getHWInstruction_fd();
 		int getCycles_fd();
 		int getFD(int i);
-
-
-
 		/*
 		*	VOID
 		*/
@@ -73,15 +70,11 @@ class worker {
 		void schedulePriority(int priority);
 		void lockCPU(int cpu);
 
-
 	private: 
 		wtype type;
 		int cpu;
 		int pid;
-
 		int fd[4];
-
-
 };
 
 #endif
