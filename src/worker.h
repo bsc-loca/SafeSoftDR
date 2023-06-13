@@ -18,7 +18,7 @@
 #include <vector>
 
 
-#define HEAD_TRAIL_PRIORITY 0
+#define HEAD_TRAIL_PRIORITY -10
 #define MONITOR_PRIORITY -10
 
 enum metrics { instructions, cycles };  
