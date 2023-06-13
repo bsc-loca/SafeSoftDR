@@ -77,10 +77,7 @@ typedef struct pro_res{
 	long long trail_instr; /** Number of instructions commited during the activation by trail core */
 }pro_res;
 
-pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] ),void * argv_input_head[] ,void * argv_input_trail[] ,int * input_size[] ,void * argv_output_head[] ,void * argv_output_trail[] ,int * output_size[]);
-pro_res protect_real_waitpid(void  (* function )(void * [] ,  void * [] ),void * argv_input_head[], void * argv_input_trail[] , int * input_size[] , void * argv_output_head[] ,	void * argv_output_trail[] ,int * output_size[]);
-pro_res protect_real_sh(void  (* function )(void * [] ,  void * [] ),void * argv_input_head[], void * argv_input_trail[] , int * input_size[] , void * argv_output_head[] ,	void * argv_output_trail[] ,int * output_size[]);
-
+pro_res protect_real_waitpid(void  (* function )(void * [] ,  void * [] ),void * argv_input_head[] ,void * argv_input_trail[] ,int * input_size[] ,void * argv_output_head[] ,void * argv_output_trail[] ,int * output_size[]);
 
 bool protect_default( void  (* function )(void * [] ,  void * [] ), void * argv_input[] ,int * input_size[] , void * argv_output[] ,int * output_size[]);
 bool protect_input(void  (* function )(void * [], void * [] ), void * argv_input[] ,int * input_size[] , void * argv_output[] , int * output_size[]	);
@@ -154,8 +151,8 @@ void clean_sh_memory(){
 	memset(&out_share_trail[0],0x0, sizeof(void * ) * ARGV_SIZE);
 }
 inline void endWorker(struct timespec * time , bool * flag){
-		clock_gettime(CLOCK_MONOTONIC, time);
-		(*flag) = true ; 
+	clock_gettime(CLOCK_MONOTONIC, time);
+	(*flag) = true ; 
 }
 bool isMemoryEqual(void * ptr1 , void * ptr2, int bytes ){
 	bool equal = true;

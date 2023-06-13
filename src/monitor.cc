@@ -56,10 +56,7 @@
 
 using namespace std;
 
-#define call protect_real_waitpid_selene
-// #define call protect_real_waitpid
-// #define call protect_real_sh
-
+#define call protect_real_waitpid
 
 #ifdef demo
 #define LOG_SIZE (1024*1024)
@@ -126,8 +123,7 @@ pro_res protect_wrapper(void  (* function )(void * [] ,  void * [] ),void * argv
 	return call(function,argv_input_head,argv_input_trail,input_size,argv_output_head,argv_output_trail,output_size);
 }
 
-
-pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] ),void * argv_input_head[] ,void * argv_input_trail[] ,int * input_size[] ,void * argv_output_head[] ,void * argv_output_trail[] ,int * output_size[]){
+pro_res protect_real_waitpid(void  (* function )(void * [] ,  void * [] ),void * argv_input_head[] ,void * argv_input_trail[] ,int * input_size[] ,void * argv_output_head[] ,void * argv_output_trail[] ,int * output_size[]){
 	
 	#ifdef debug
 		std::vector<struct timespec> info(0); 
@@ -161,7 +157,6 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 	
 	trail_pid = fork();
 	if(trail_pid == 0 ) work( &trail,shmem,function,input_share_head,out_share_head);
-	
 	/*
 	* MONITOR CODE SECTION
 	*/
@@ -179,7 +174,7 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 	* hv_tv[0] HEAD
 	* hv_tv[1] TRAIL
 	*/
-	bool hv_tv[2]; memset( (void * ) hv_tv, 0x0,sizeof(bool) * 2);
+	bool hv_tv[2]; memset( (void * ) hv_tv, 0b0,sizeof(bool) * 2);
 	unsigned short * hv_tv_ptr = (unsigned short *)&hv_tv[0];
 
 	/*
@@ -242,12 +237,12 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 	while(1){
 
 			waitpid(trail_pid, &trail_status, WNOHANG);
-			if ( hv_tv[1] == 0 AND WIFEXITED(trail_status) ){
+			if ( not hv_tv[1] AND WIFEXITED(trail_status) ){
 				endWorker(&time_shared[2] , &hv_tv[1]);
 			}
 
 			waitpid(head_pid, &head_status, WNOHANG);
-			if ( hv_tv[0]  == 0 AND WIFEXITED(head_status)){			
+			if ( not hv_tv[0] AND WIFEXITED(head_status)){			
 				endWorker(&time_shared[1] , &hv_tv[0]);
 			}
 			
@@ -258,7 +253,7 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 			/*
 			* both alive
 			*/
-			if( hv_tv[0] == 0x00 AND hv_tv[1] == 0x00 ){
+			if( not hv_tv[0] AND not hv_tv[1] ){
 
 				//CHECK IF PROGRESS FOR TIMEOUT
 				std::chrono::time_point<std::chrono::high_resolution_clock> Now = std::chrono::system_clock::now();
@@ -266,7 +261,10 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 					//no progress check timeout:
 					//if timeout bigger than threshold kill process message timeout and exit
 					if (Now - HeadTimeoutCounter >= TIMEOUT_THRESHOLD){
+						#ifdef debug
 						cout << "TIMEOUT reached for HEAD process" << endl;
+						#endif
+						// TODO KILL Process
 					}
 					//else do nothing
 				}
@@ -277,7 +275,10 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 					//no progress check timeout:
 					//if timeout bigger than threshold kill process message timeout and exit
 					if (Now - TrailTimeoutCounter >= TIMEOUT_THRESHOLD){
+						#ifdef debug
 						cout << "TIMEOUT reached for TRAIL process" << endl;
+						#endif
+						// TODO KILL Process
 					}
 					//else do nothing
 				}
@@ -294,6 +295,8 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 				#ifdef active
 					debug_active(head.getworkerPid(),trail.getworkerPid(),false);
 				#endif
+
+                
 
 				/*
 				* create stag
@@ -318,7 +321,7 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 						}
 					}else{
 						waitpid(trail_pid, &trail_status, WNOHANG);
-						if (WIFEXITED(trail_status) AND hv_tv[1] == 0) endWorker(&time_shared[2] , &hv_tv[1]);
+						if (WIFEXITED(trail_status) AND not hv_tv[1]) endWorker(&time_shared[2] , &hv_tv[1]);
 					}
 					read_add_reset(&instructions_head_trail[0] ,&head,&trail);
 
@@ -329,7 +332,10 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 							//no progress check timeout:
 							//if timeout bigger than threshold kill process message timeout and exit
 							if (Now - HeadTimeoutCounter >= TIMEOUT_THRESHOLD){
+								#ifdef debug
 								cout << "TIMEOUT reached for HEAD process" << endl;
+								#endif
+								// TODO Kill process
 							}
 						//else do nothing
 						}
@@ -353,7 +359,7 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 						/*
 						* head death
 						*/
-						if (hv_tv[0]  == 0 AND WIFEXITED(head_status) ){
+						if (not hv_tv[0] AND WIFEXITED(head_status) ){
 							endWorker(&time_shared[1] , &hv_tv[0]);
 							instructions_head_trail[0] += head.getHWInstruction(head.getFD(instructions));
 							head.resetPMC_at(head.getFD(instructions)); 
@@ -361,7 +367,6 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 						}
 					}
 					c++;
-					
 					
 					if(kill(trail.getworkerPid(),SIGCONT) == KILL_SUCCESSFUL){
 						char state = getState(trail.getworkerPid());
@@ -393,6 +398,18 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 				}
 				
 			}else{
+				//HEAD Finished 
+					
+							waitpid(head_pid, &head_status, WNOHANG);
+			if ( not hv_tv[0] AND WIFEXITED(head_status)){			
+				endWorker(&time_shared[1] , &hv_tv[0]);
+			}
+
+				//HEAD Finished (hv_tv[0] == TRUE)
+												#ifdef debug
+								cout << "TIMEOUT reached for HEAD process" << endl;
+								#endif
+							
 			}
 			
 	
@@ -400,7 +417,7 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 			/*
 			* both death
 			*/
-			if( hv_tv[0] == 0x01 AND hv_tv[1] == 0x01 ){
+			if( hv_tv[0] AND hv_tv[1] ){
 				read_add_reset(&instructions_head_trail[0] ,&head,&trail);
 				#ifdef instr
 					debug_instr(instructions_head_trail[0],instructions_head_trail[1]);
@@ -423,7 +440,6 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 			}
 			
 		}
-	//cout << "stall : " << c << endl;
 #ifdef demo
 	DemoLog::dump();
 #endif
@@ -454,735 +470,6 @@ pro_res protect_real_waitpid_selene(void  (* function )(void * [] ,  void * [] )
 	#ifdef demo
 		//debug_execution(res);
 	#endif
-
-	return res;
-}
-
-#ifdef protect_real_waitpid
-pro_res protect_real_waitpid(void  (* function )(void * [] ,  void * [] ),void * argv_input_head[] ,void * argv_input_trail[] ,int * input_size[] ,void * argv_output_head[] ,void * argv_output_trail[] ,int * output_size[]){
-	
-	#ifdef debug
-		std::vector<struct timespec> info(0); 
-		std::vector<int> state(0);
-		bool flag = false;
-	#endif
-
-	struct timespec * time_shared= (struct timespec *)create_shared_memory(3 * sizeof(timespec));
-	struct timespec time_actual;
-	memset(shmem,0x0,128);
-	/*
-	*        PIDs
-	*/
-
-	pid_t monitor_pid = getpid(); 
-	pid_t head_pid = 0 ;
-	pid_t trail_pid = 0 ; 
-
-	/*
-	*   WORKER
-	*/
-	
-	worker monitor(monitor_t);
-	worker head(head_t);
-	worker trail(trail_t);
-
-	monitor.lockCPU(0);
-
-	head_pid = fork();	
-	if(head_pid == 0 ) work( &head,shmem,function,input_share_head,out_share_head);
-	
-	trail_pid = fork();
-	if(trail_pid == 0 ) work( &trail,shmem,function,input_share_head,out_share_head);
-		/*
-		*
-		* MONITOR CODE SECTION
-		*
-		*/
-
-	int head_status = -1 ;
-	int trail_status = -1 ;
-
-	int head_kill = - 1;
-	int trail_kill = -1;
-	/*
-	* HEAD [0]
-	* TRAIL [1]
-	*/
-	long long instructions_head_trail[2];  memset((void * )instructions_head_trail , 0x0, sizeof(long long) * 2);
-	long long instructions_head_add = 0;
-
-	long long sub = 0;
-	
-	/*
-	* hv_tv[0] HEAD
-	* hv_tv[1] TRAIL
-	*/
-	bool hv_tv[2]; memset( (void * ) hv_tv, 0x0,sizeof(bool) * 2);
-	unsigned short * hv_tv_ptr = (unsigned short *)&hv_tv[0];
-
-	init_workers(&head,&trail,head_pid,trail_pid);
-
-	/*
-	*	Check error perf open
-	*/
-	check_perf_open(&head, &trail);
-	
-	/*
-	* if head trail file with perf 
-	*/
-
-	/*
-	*  If HEAD,TRAIL are ready to execute
-	*/
-	
-	while(( ((unsigned short *)shmem)[0]) != 0x0101 );
-	
-	clock_gettime(CLOCK_MONOTONIC, &time_shared[0]);
-
-	head.enablePMC_at(head.getFD(instructions));
-	trail.enablePMC_at(trail.getFD(instructions));
-	
-	#ifdef active
-		cout << ":a::---" << endl;
-		cout << ":a::active,head,trail" << endl;
-		clock_gettime(CLOCK_MONOTONIC, &time_actual);
-		long long value_active = time_actual.tv_sec * 1000000000 +  time_actual.tv_nsec  ;
-		cout << ":a::" << value_active << "," << HD << "," << TD << endl;
-	#endif
-
-	#ifdef instr
-		cout << ":i::---" << endl;
-		cout << ":i::ns,head,trail" << endl;
-		clock_gettime(CLOCK_MONOTONIC, &time_actual);
-		long long value_instr = time_actual.tv_sec * 1000000000 +  time_actual.tv_nsec  ;
-		cout << ":i::" << value_instr <<  "," << instructions_head_trail[0] << "," << instructions_head_trail[1] << endl;
-	#endif
-
-	#ifdef demo
-		cout << "[+] staggering : " << setw(15) <<
-		to_formatted((long long)(instructions_head_trail[0] - instructions_head_trail[1])) <<  endl;
-	#endif
-	
-	/*
-	*  START HEAD
-	*/
-	((unsigned char *)shmem)[2]= 0x1;
-	head.resetPMC_at(head.getFD(instructions));
-	
-	/*
-	* The next while is to produce a stag of x instruction at the beginning of head and trail execution
-	*/
-	#ifndef demo
-		while(instructions_head_trail[0] < WINDOWS_INSTRUCTION &&  !WIFEXITED(head_status) )
-		{  	
-		#ifdef active
-			clock_gettime(CLOCK_MONOTONIC, &time_actual);
-			long long value_active = time_actual.tv_sec * 1000000000 +  time_actual.tv_nsec  ;
-			cout << ":a::" << value_active << "," << HA << "," << TD << endl;
-		#endif
-		#ifdef instr
-			clock_gettime(CLOCK_MONOTONIC, &time_actual);
-			long long value_instr = time_actual.tv_sec * 1000000000 +  time_actual.tv_nsec  ;
-			cout << ":i::" << value_instr <<  "," << instructions_head_trail[0] << "," << instructions_head_trail[1] << endl;
-		#endif
-		/*
-		* If windows_instruction > all instructions executable by binary
-		*/
-		instructions_head_trail[0] += head.getHWInstruction(head.getFD(instructions));
-		head.resetPMC_at(head.getFD(instructions));
-		waitpid(head_pid, &head_status, WNOHANG);
-		}
-	#endif
-	
-	/*
-	* START TRAIL
-	*/
-	((unsigned char *)shmem)[3]= 0x1;
-	trail.resetPMC_at(trail.getFD(instructions));
-
-	monitor.setScheduler(SCHEDULER_START);
-	int c = 0 ;
-	while(1){
-
-			waitpid(trail_pid, &trail_status, WNOHANG);
-			if ( hv_tv[1] == 0 AND WIFEXITED(trail_status) ){
-				endWorker(&time_shared[2] , &hv_tv[1]);
-			}
-
-			waitpid(head_pid, &head_status, WNOHANG);
-			if ( hv_tv[0]  == 0 AND WIFEXITED(head_status)){			
-				endWorker(&time_shared[1] , &hv_tv[0]);
-			}
-			
-			#ifdef demo
-				usleep(DEMO_MS * 1000);
-			#endif
-
-			/*
-			* both alive
-			*/
-			if( hv_tv[0] == 0x00 AND hv_tv[1] == 0x00 ){
-				
-				read_add_reset(&instructions_head_trail[0] ,&head,&trail);
-				sub = instructions_head_trail[0] - instructions_head_trail[1];
-				
-				#ifdef instr
-					debug_instr(instructions_head_trail[0],instructions_head_trail[1]);  
-				#endif
-
-				#ifdef active
-					debug_active(head.getworkerPid(),trail.getworkerPid(),false);
-				#endif
-
-				#ifdef demo
-					cout << "[+] staggering : " << setw(15) <<
-					to_formatted((long long)(instructions_head_trail[0] - instructions_head_trail[1])) <<  endl;
-				#endif
-		
-				
-				/*
-				* create stag
-				*/
-				if(sub < WINDOWS_INSTRUCTION){
-					
-					#ifdef demo
-					cout << "[+] staggering : "  <<  setw(15) << 
-					to_formatted((long long)sub) << setw(10) << " STALL --->" << setw(8) <<  "TRAIL" <<  endl;
-					#endif
-
-					if(kill(trail.getworkerPid(),SIGSTOP) == KILL_SUCCESSFUL){
-						char state = getState(trail.getworkerPid());
-						while(state == 'R' AND ! WIFEXITED(trail_status)){
-							waitpid(trail_pid, &trail_status, WNOHANG);
-							state = getState(trail.getworkerPid());
-						}
-					}else{
-						waitpid(trail_pid, &trail_status, WNOHANG);
-						if (WIFEXITED(trail_status) AND hv_tv[1] == 0) endWorker(&time_shared[2] , &hv_tv[1]);
-					}
-
-					read_add_reset(&instructions_head_trail[0] ,&head,&trail);
-					
-					sub = instructions_head_trail[0] - instructions_head_trail[1];
-
-					// cout << instructions_head_trail[0] << " " <<  instructions_head_trail[1] << endl;
-					while((instructions_head_trail[0] - instructions_head_trail[1]) < WINDOWS_INSTRUCTION ){
-
-						instructions_head_trail[0] +=  head.getHWInstruction(head.getFD(instructions));
-						head.resetPMC_at(head.getFD(instructions));
-
-						#ifdef instr
-							debug_instr(instructions_head_trail[0],instructions_head_trail[1]);
-						#endif
-
-						#ifdef active
-							debug_active(head.getworkerPid(),trail.getworkerPid(),true);
-						#endif
-
-						sub = instructions_head_trail[0] - instructions_head_trail[1];
-						waitpid(head_pid, &head_status, WNOHANG);
-						/*
-						* head death
-						*/
-						if (hv_tv[0]  == 0 AND WIFEXITED(head_status) ){
-							endWorker(&time_shared[1] , &hv_tv[0]);
-							instructions_head_trail[0] += head.getHWInstruction(head.getFD(instructions));
-							head.resetPMC_at(head.getFD(instructions)); 
-							break;
-						}
-					}
-					c++;
-					
-					if(kill(trail.getworkerPid(),SIGCONT) == KILL_SUCCESSFUL){
-						char state = getState(trail.getworkerPid());
-						while( state != 'R'){
-							if(state == 'Z')break;
-							state = getState(trail.getworkerPid());
-						}
-					}
-					
-					#ifdef demo
-						if(WIFEXITED(trail_status) OR WIFEXITED(head_status)){
-							cout << "[+] staggering : "  << setw(15) << 0 << setw(10) << " RESUME -->" << setw(8) << "TRAIL" <<  endl;
-						}else{
-							cout << "[+] staggering : "  << setw(15) <<
-							to_formatted((long long)sub) << setw(10) << " RESUME -->" << setw(8) <<"TRAIL" <<  endl;
-						}
-					
-					#endif
-				
-				}
-				
-			}else{
-
-			}
-			
-			/*
-			*	head live
-			*	trail dead
-			*/
-			// if( hv_tv[0] == 0x00 AND hv_tv[1] == 0x01 ){
-
-			// 	instructions_head_trail[0] += head.getHWInstruction(head.getFD(instructions));
-			// 	instructions_head_trail[1] += trail.getHWInstruction(trail.getFD(instructions));
-					
-			// 	head.resetPMC_at(head.getFD(instructions));
-			// 	trail.resetPMC_at(trail.getFD(instructions));
-				
-			// 	#ifdef instr
-			// 		debug_instr(instructions_head_trail[0],instructions_head_trail[1]);
-			// 	#endif
-
-			// 	#ifdef active
-			// 		debug_active(head.getworkerPid(),trail.getworkerPid(),false);
-			// 	#endif
-
-			// }
-
-			// /*
-			// * head dead
-			// * trail live
-			// */
-			// if( hv_tv[0] == 0x01 AND hv_tv[1] == 0x00 ){
-			// 	instructions_head_trail[0] += head.getHWInstruction(head.getFD(instructions));
-			// 	instructions_head_trail[1] += trail.getHWInstruction(trail.getFD(instructions));
-					
-			// 	head.resetPMC_at(head.getFD(instructions));
-			// 	trail.resetPMC_at(trail.getFD(instructions));
-			// 	cout << instructions_head_trail[0] << " " << instructions_head_trail[1]  << endl;
-			// 	#ifdef instr
-			// 		debug_instr(instructions_head_trail[0],instructions_head_trail[1]);
-			// 	#endif
-
-			// 	#ifdef active
-			// 		debug_active(head.getworkerPid(),trail.getworkerPid(),false);
-			// 	#endif
-
-			// }
-
-
-			/*
-			* both death
-			*/
-			if( hv_tv[0] == 0x01 AND hv_tv[1] == 0x01 ){
-					read_add_reset(&instructions_head_trail[0] ,&head,&trail);
-				#ifdef instr
-					debug_instr(instructions_head_trail[0],instructions_head_trail[1]);
-				#endif
-
-				#ifdef active
-					debug_active(head.getworkerPid(),trail.getworkerPid(),false);
-				#endif
-
-				break;
-			}
-			
-		}
-	cout << "stall : " << c << endl;
-	monitor.setScheduler(SCHEDULER_END);
-
-	long long head_ns = (time_shared[1].tv_sec - time_shared[0].tv_sec ) * BILLION + 
-												(time_shared[1].tv_nsec - time_shared[0].tv_nsec );
-
-	long long trail_ns = (time_shared[2].tv_sec - time_shared[0].tv_sec ) * BILLION + 
-												(time_shared[2].tv_nsec - time_shared[0].tv_nsec );
-
-	bool good = false;
-
-	cout << "[+] HEAD instructions : " << instructions_head_trail[0]<< endl;
-	cout << "[+] TRAIL instructions : " << instructions_head_trail[1] << endl;
-
-	cout << "[+] HEAD ns " << head_ns << endl;
-	cout << "[+] TRAIL ns " << trail_ns << endl;
-	if(head_ns < trail_ns ){
-		// cout << "{+++} Head good " << endl;
-		good = true;
-	}else{
-		// cout << "{---} Head fail " << endl;
-	 }
-
-	head.disablePMC_at(head.getFD(instructions));
-	trail.disablePMC_at(trail.getFD(instructions));
-
-	close(head.getFD(instructions)) ;
-	close(trail.getFD(instructions)) ;
-
-	pro_res res;
-
-	res.safe = good;
-	res.head_ns = head_ns;
-	res.trail_ns = trail_ns;
-	res.head_instr = instructions_head_trail[0];
-	res.trail_instr = instructions_head_trail[1];
-
-	#ifdef active
-		if(res.safe) cout << ":a::Pactive,"   << head_ns << "," << trail_ns << "," << time_shared[1].tv_sec * BILLION + time_shared[1].tv_nsec << ", " << time_shared[2].tv_sec * BILLION + time_shared[2].tv_nsec <<  endl;
-		else cout << ":a::NPactive,"   << head_ns << "," << trail_ns << "," << time_shared[1].tv_sec * BILLION + time_shared[1].tv_nsec << ", " << time_shared[2].tv_sec * BILLION + time_shared[2].tv_nsec <<  endl;
-	#endif
-
-	#ifdef instr
-		if(res.safe) cout << ":i::Pinstr,"   << instructions_head_trail[0] << "," << instructions_head_trail[1]  << endl;
-		else cout << ":i::NPinstr,"   << instructions_head_trail[0] << "," << instructions_head_trail[1]  << endl;
-	#endif
-
-	#ifdef demo
-		//debug_execution(res);
-	#endif
-
-	return res;
-}
-#endif
-
-pro_res protect_real_sh(void  (* function )(void * [] ,  void * [] ),void * argv_input_head[] ,void * argv_input_trail[] ,int * input_size[] ,void * argv_output_head[] ,void * argv_output_trail[] ,int * output_size[]){
-
-	struct timespec * time_shared= (struct timespec *)create_shared_memory(3 * sizeof(timespec));
-	struct timespec time_actual;
-	memset(shmem,0x0,128);
-
-	long long WINDOWS_INSTRUCTION = 500;
-
-	
-	/*
-	*        PIDs
-	*/
-
-	pid_t monitor_pid = getpid(); 
-	pid_t head_pid = 0 ;
-	pid_t trail_pid = 0 ; 
-
-	/*
-	*   WORKER
-	*/
-	
-	worker monitor;
-	worker head;
-	worker trail;
-	
-
-	monitor.lockCPU(0);
-	monitor.schedulePriority(MONITOR_PRIORITY);
-
-	head_pid = fork();
-	if(head_pid == 0 ){
-		head.lockCPU(1); 
-		head.setScheduler(SCHED_FIFO);
-		((unsigned char *)shmem)[0] = 0x1;
-		while(( ((unsigned char *)shmem)[2]) == 0x0 );
-		(*function)(input_share_head,out_share_head);
-		((unsigned char *)shmem)[4] = 0x01;
-		head.setScheduler(SCHED_OTHER);
-		exit(0);
-	}
-	trail_pid = fork();
-	if(trail_pid == 0 ){
-		trail.lockCPU(2);
-		head.setScheduler(SCHED_FIFO);
-		((unsigned char *)shmem)[1] = 0x1;
-		while(( ((unsigned char *)shmem)[3]) == 0x0 );
-		(*function)(input_share_trail,out_share_trail);
-		((unsigned char *)shmem)[5] = 0x01;
-		head.setScheduler(SCHED_OTHER);
-		exit(0);
-	}
-		/*
-		*
-		* MONITOR CODE SECTION
-		*
-		*/
-
-	int head_status = -1 ;
-	int trail_status = -1 ;
-
-	int head_kill = - 1;
-	int trail_kill = -1;
-	/*
-	* HEAD [0]
-	* TRAIL [1]
-	*/
-	long long instructions_head_trail[2];
-		instructions_head_trail[0] = 0 ;
-		instructions_head_trail[1] = 0 ;
-	long long instructions_head_add = 0;
-
-	long long sub = 0;
-	
-	/*
-	* hv_tv[0] HEAD
-	* hv_tv[1] TRAIL
-	*/
-	bool hv_tv[2]; 
-		hv_tv[0] = false;
-		hv_tv[1] = false;
-
-	unsigned short * hv_tv_ptr = (unsigned short *)&hv_tv[0];
-
-	head.setworkerPid(head_pid);
-	head.setFD(head.getHWInstruction_fd(), instructions );
-	head.resetPMC_at(head.getFD(instructions));
-
-	trail.setworkerPid(trail_pid);
-	trail.setFD(trail.getHWInstruction_fd(), instructions );
-	trail.resetPMC_at(trail.getFD(instructions));
-
-	/*
-	*	Check error perf open
-	*/	
-	check_perf_open(&head, &trail);
-
-	/*
-	*  If HEAD,TRAIL are ready to execute
-	*/
-	while(( ((unsigned short *)shmem)[0]) != 0x0101 );
-	
-	clock_gettime(CLOCK_MONOTONIC, &time_shared[0]);
-
-	head.enablePMC_at(head.getFD(instructions));
-	trail.enablePMC_at(trail.getFD(instructions));
-
-	#ifdef active
-		cout << ":a::---" << endl;
-		cout << ":a::active,head,trail" << endl;
-		clock_gettime(CLOCK_MONOTONIC, &time_actual);
-		long long value_active = time_actual.tv_sec * 1000000000 +  time_actual.tv_nsec  ;
-		cout << ":a::" << value_active << "," << HD << "," << TD << endl;
-	#endif
-
-	#ifdef instr
-		cout << ":i::---" << endl;
-		cout << ":i::ns,head,trail" << endl;
-		clock_gettime(CLOCK_MONOTONIC, &time_actual);
-		long long value_instr = time_actual.tv_sec * 1000000000 +  time_actual.tv_nsec  ;
-		cout << ":i::" << value_instr <<  "," << instructions_head_trail[0] << "," << instructions_head_trail[1] << endl;
-	#endif
-
-	/*
-	*  start HEAD
-	*/
-	((unsigned char *)shmem)[2]= 0x1;
-	head.resetPMC_at(head.getFD(instructions));
-
-	while(instructions_head_trail[0] < WINDOWS_INSTRUCTION && ! WIFEXITED(head_status)  )
-	{  	
-		#ifdef active
-			clock_gettime(CLOCK_MONOTONIC, &time_actual);
-			long long value_active = time_actual.tv_sec * 1000000000 +  time_actual.tv_nsec  ;
-			cout << ":a::" << value_active << "," << HA << "," << TD << endl;
-		#endif
-		#ifdef instr
-			clock_gettime(CLOCK_MONOTONIC, &time_actual);
-			long long value_instr = time_actual.tv_sec * 1000000000 +  time_actual.tv_nsec  ;
-			cout << ":i::" << value_instr <<  "," << instructions_head_trail[0] << "," << instructions_head_trail[1] << endl;
-		#endif
-		/*
-		* If windows_instruction > all instructions executable by binary
-		*/
-		instructions_head_trail[0] += head.getHWInstruction(head.getFD(instructions));
-		head.resetPMC_at(head.getFD(instructions));
-		waitpid(head_pid, &head_status, WNOHANG);
-	
-	}
-
-	/*
-	* start TRAIL
-	*/
-	((unsigned char *)shmem)[3]= 0x1;
-	trail.resetPMC_at(trail.getFD(instructions));
-
-	monitor.setScheduler(SCHED_FIFO);
-	
-	while(1){
-
-
-			/*TRAIL*/
-			if ( ( ((unsigned char *)shmem)[5] + hv_tv[1] ) == 0x01 ) endWorker(&time_shared[2] , &hv_tv[1]);
-			/*HEAD*/
-			if ( ( ((unsigned char *)shmem)[4] + hv_tv[0] ) == 0x01 ) endWorker(&time_shared[1] , &hv_tv[0]);
-			
-			/*
-			* both alive
-			*/
-			if( hv_tv[0] == 0x00 AND hv_tv[1] == 0x00 ){
-				
-				#ifdef instr
-					debug_instr(instructions_head_trail[0],instructions_head_trail[1]);
-				#endif
-
-				#ifdef active
-					debug_active(head.getworkerPid(),trail.getworkerPid(),false);
-				#endif
-				
-				instructions_head_trail[0] += head.getHWInstruction(head.getFD(instructions));
-				instructions_head_trail[1] += trail.getHWInstruction(trail.getFD(instructions));
-				head.resetPMC_at(head.getFD(instructions));
-				trail.resetPMC_at(trail.getFD(instructions));
-
-				sub = instructions_head_trail[0] - instructions_head_trail[1];
-				/*
-				* create stag
-				*/
-				if(sub < WINDOWS_INSTRUCTION){
-					trail_kill = kill(trail.getworkerPid(),SIGSTOP);
-					if(trail_kill == KILL_SUCCESSFUL){
-						char state = getState(trail.getworkerPid());
-						while(state == 'R' AND ((unsigned char *)shmem)[5] == 0x00 ){
-							state = getState(trail.getworkerPid());
-						}
-					}else{
-						if((((unsigned char *)shmem)[5] + hv_tv[1]) == 0x01)endWorker(&time_shared[2] , &hv_tv[1]);
-					}
-
-					instructions_head_trail[0] += head.getHWInstruction(head.getFD(instructions));
-					instructions_head_trail[1] += trail.getHWInstruction(trail.getFD(instructions));
-					head.resetPMC_at(head.getFD(instructions));
-					trail.resetPMC_at(trail.getFD(instructions));
-
-					sub = instructions_head_trail[0] - instructions_head_trail[1];
-
-					while(sub < WINDOWS_INSTRUCTION ){
-
-						instructions_head_trail[0] +=  head.getHWInstruction(head.getFD(instructions));
-						head.resetPMC_at(head.getFD(instructions));
-
-						#ifdef instr
-							debug_instr(instructions_head_trail[0],instructions_head_trail[1]);
-						#endif
-
-						#ifdef active
-							debug_active(head.getworkerPid(),trail.getworkerPid(),true);
-						#endif
-
-						sub = instructions_head_trail[0] - instructions_head_trail[1];
-
-						/*
-						* head death
-						*/
-						if ( ((unsigned char *)shmem)[4] == 0x01 ){
-							endWorker(&time_shared[1] , &hv_tv[0]);
-							instructions_head_trail[0] += head.getHWInstruction(head.getFD(instructions));
-							head.resetPMC_at(head.getFD(instructions)); 
-							break;
-						}
-					}
-					trail_kill = kill(trail.getworkerPid(),SIGCONT);
-					if(trail_kill == KILL_SUCCESSFUL){
-						char state = getState(trail.getworkerPid());
-						while( state != 'R'){
-							if(state == 'Z')break;
-							state = getState(trail.getworkerPid());
-						}
-					}
-				}	
-			}
-
-			/*
-			*	head live
-			*	trail dead
-			*/
-			if( hv_tv[0] == 0x00 AND hv_tv[1] == 0x01 ){
-				instructions_head_trail[0] += head.getHWInstruction(head.getFD(instructions));
-				instructions_head_trail[1] += trail.getHWInstruction(trail.getFD(instructions));
-					
-				head.resetPMC_at(head.getFD(instructions));
-				trail.resetPMC_at(trail.getFD(instructions));
-				
-				#ifdef instr
-					debug_instr(instructions_head_trail[0],instructions_head_trail[1]);
-				#endif
-
-				#ifdef active
-					debug_active(head.getworkerPid(),trail.getworkerPid(),false);
-				#endif
-			}
-
-			/*
-			* head dead
-			* trail live
-			*/
-			if( hv_tv[0] == 0x01 AND hv_tv[1] == 0x00 ){
-				instructions_head_trail[0] += head.getHWInstruction(head.getFD(instructions));
-				instructions_head_trail[1] += trail.getHWInstruction(trail.getFD(instructions));
-					
-				head.resetPMC_at(head.getFD(instructions));
-				trail.resetPMC_at(trail.getFD(instructions));
-				
-				#ifdef instr
-					debug_instr(instructions_head_trail[0],instructions_head_trail[1]);
-				#endif
-
-				#ifdef active
-					debug_active(head.getworkerPid(),trail.getworkerPid(),false);
-				#endif
-			}
-
-			/*
-
-			* both death
-			*/
-			if( hv_tv[0] == 0x01 AND hv_tv[1] == 0x01 ){
-					instructions_head_trail[0] += head.getHWInstruction(head.getFD(instructions));
-					instructions_head_trail[1] += trail.getHWInstruction(trail.getFD(instructions));
-					
-					head.resetPMC_at(head.getFD(instructions));
-					trail.resetPMC_at(trail.getFD(instructions));
-
-				#ifdef instr
-					debug_instr(instructions_head_trail[0],instructions_head_trail[1]);
-				#endif
-
-				#ifdef active
-					debug_active(head.getworkerPid(),trail.getworkerPid(),false);
-				#endif
-
-				break;
-			} 
-		}
-	 
-	monitor.setScheduler(SCHED_OTHER);
-
-	long long head_ns = (time_shared[1].tv_sec - time_shared[0].tv_sec ) * BILLION + 
-												(time_shared[1].tv_nsec - time_shared[0].tv_nsec );
-
-	long long trail_ns = (time_shared[2].tv_sec - time_shared[0].tv_sec ) * BILLION + 
-												(time_shared[2].tv_nsec - time_shared[0].tv_nsec );
-
-	bool good = false;
-
-	// cout << "[+] HEAD instructions : " << instructions_head_trail[0]<< endl;
-	// cout << "[+] TRAIL instructions : " << instructions_head_trail[1] << endl;
-
-	// cout << "[+] HEAD ns " << head_ns << endl;
-	// cout << "[+] TRAIL ns " << trail_ns << endl;
-	if(head_ns < trail_ns ){
-		// cout << "{+++} Head good " << endl;
-		good = true;
-	}else{
-		// cout << "{---} Head fail " << endl;
-	 }
-
-	head.disablePMC_at(head.getFD(instructions));
-	trail.disablePMC_at(trail.getFD(instructions));
-
-	close(head.getFD(instructions)) ;
-	close(trail.getFD(instructions)) ;
-
-	pro_res res;
-
-	res.safe = good;
-	res.head_ns = head_ns;
-	res.trail_ns = trail_ns;
-	res.head_instr = instructions_head_trail[0];
-	res.trail_instr = instructions_head_trail[1];
-
-	#ifdef active
-		if(res.safe) cout << ":a::Pactive,"   << head_ns << "," << trail_ns << "," << time_shared[1].tv_sec * BILLION + time_shared[1].tv_nsec << ", " << time_shared[2].tv_sec * BILLION + time_shared[2].tv_nsec <<  endl;
-		else cout << ":a::NPactive,"   << head_ns << "," << trail_ns << "," << time_shared[1].tv_sec * BILLION + time_shared[1].tv_nsec << ", " << time_shared[2].tv_sec * BILLION + time_shared[2].tv_nsec <<  endl;
-	#endif
-
-	#ifdef instr
-		if(res.safe) cout << ":i::Pinstr,"   << instructions_head_trail[0] << "," << instructions_head_trail[1]  << endl;
-		else cout << ":i::NPinstr,"   << instructions_head_trail[0] << "," << instructions_head_trail[1]  << endl;
-	#endif
-
 
 	return res;
 }
