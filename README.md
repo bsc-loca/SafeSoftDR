@@ -32,6 +32,10 @@ Different levels of protection are offered by the library based on the ```protec
  - **protect_def_inp**: Duplicates the input of the calling functions and executes a staggered execution in two cores, saves the result of one of them.
  - **protect_def_inp_out**: Duplicates the input of the calling functions and executes a staggered execution in two cores, compares the results and saves the result of one of them if fault free.
 
+# How to use
+
+This library is intended to protect a function by executing it in a staggered manner between two cores of a multicore system. To do this...
+
 ## Compiling
 
 ### Compiling the library
