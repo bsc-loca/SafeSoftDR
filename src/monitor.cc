@@ -497,6 +497,7 @@ bool protect_default(void  (* function )(void * [] ,  void * [] ),void * argv_in
 
 	return safe.safe ; 
 }
+
 bool protect_input(void  (* function )(void * [], void * [] ),void * argv_input[],int * input_size[],void * argv_output[],int * output_size[]){
 	
 	clean_sh_memory();
@@ -544,6 +545,7 @@ bool protect_output(void  (* function )(void * [], void * [] ),void * argv_input
 
 	return safe.safe ; 
 }
+
 bool protect_input_output(void  (* function )(void * [], void * [] ),void * argv_input[],int * input_size[],void * argv_output[] ,int * output_size[]){
 
 	clean_sh_memory();
@@ -584,18 +586,6 @@ bool protect_def(void  (* function )(void * [], void * [] ), void * argv_input[]
 
 		/*create output*/
 		set_output(argv_output,output_size);
-
-	/*protect_no*/
-	// }else if( i_stack == 1 && stackk[1] == O ){
-	// 	/*nothing to do*/
-	// /*protect_ni*/
-	// }else if( i_stack == 1 && stackk[1] == I ){ 
-	
-	// /*protect_noi*/
-	// }else if( i_stack == 2 && stackk[1] ==  O && stackk[2] == I ){ 
-
-	// /*protect_nio*/
-	// }else if( i_stack == 2 && stackk[1] ==  I && stackk[2] == O ){ 
 	}
 
 	pro_res res  = protect_wrapper(function,input_share_head,input_share_trail,input_size,out_share_head,out_share_trail, output_size);
@@ -616,17 +606,6 @@ bool protect_def(void  (* function )(void * [], void * [] ), void * argv_input[]
 		/*free output*/
 		free_output(argv_output,output_size);
 
-	// /*protect_no*/
-	// }else if( i_stack == 1 && stackk[1] == O ){
-
-	// /*protect_ni*/
-	// }else if( i_stack == 1 && stackk[1] == I ){ 
-	
-	// /*protect_noi*/
-	// }else if( i_stack == 2 && stackk[1] ==  O && stackk[2] == I ){ 
-
-	// /*protect_nio*/
-	// }else if( i_stack == 2 && stackk[1] ==  I && stackk[2] == O ){ 
 	}
 
 	#ifdef debug
@@ -635,14 +614,12 @@ bool protect_def(void  (* function )(void * [], void * [] ), void * argv_input[]
 
 	return res.safe;
 }
+
 bool protect_def_out(void  (* function )(void * [], void * [] ), void * argv_input[] ,int * input_size[] , void * argv_output[] , int * output_size[]){
 
 	/*protect_no*/
 	if(i_stack == -1 ){
-		/*create general*/
-		/*create input*/
-		/*create output*/
-
+		
 		i_stack = 1;
 
 		clean_sh_memory();
@@ -655,8 +632,9 @@ bool protect_def_out(void  (* function )(void * [], void * [] ), void * argv_inp
 		/*create output*/
 		set_output(argv_output,output_size);
 	}
+
 	/*protect_noi*/
-	else if ( i_stack == 2 ){/*caller do*/
+	else if ( i_stack == 2 ){/*caller do*/ //SA: To Check what is this
 	}
 	
 	bool safe = protect_def(function,argv_input,input_size,argv_output,output_size);
@@ -664,11 +642,6 @@ bool protect_def_out(void  (* function )(void * [], void * [] ), void * argv_inp
 
 	/*protect_no*/
 	if( i_stack == 1){
-		/*compare output*/
-		/*free general*/
-		/*free input*/
-		/*free output*/
-
 		i_stack = -1;
 		
 		/*compare output*/
@@ -693,10 +666,6 @@ bool protect_def_inp(void  (* function )(void * [], void * [] ), void * argv_inp
 
 	/*protect_ni*/
 	if(i_stack == -1 ){
-		/*create general*/
-        /*create input*/ /*duplicate*/ 
-        /*create output*/
-
 		i_stack = 1;
 
 		clean_sh_memory();
@@ -717,10 +686,6 @@ bool protect_def_inp(void  (* function )(void * [], void * [] ), void * argv_inp
 
 	/*protect_ni*/
 	if( i_stack == 1){
-		/*free general*/
-        /*free input*/
-        /*free output*/
-
 		i_stack = -1;
 
 		/*free general*/
@@ -746,10 +711,6 @@ bool protect_def_out_inp(void  (* function )(void * [], void * [] ), void * argv
 
 	/*protect_noi*/
 	if(i_stack == -1){
-	    /*create general*/
-        /*create input*/ /*duplicate*/
-        /*create output*/
-
 		i_stack = 2;
 
 		clean_sh_memory();
@@ -765,10 +726,6 @@ bool protect_def_out_inp(void  (* function )(void * [], void * [] ), void * argv
 
 	/*protect_noi*/
 	if(i_stack == 2){
-		/*free general*/
-		/*free input*/
-        /*free output*/
-
 		i_stack = -1;
 
 		/*free general*/
@@ -800,10 +757,6 @@ bool protect_def_inp_out(void  (* function )(void * [], void * [] ), void * argv
 
 	/*protect_nio*/
 	if(i_stack == 2){
-		/*compare output*/
-        /*free general*/
-        /*free output*/
-		
 		i_stack = -1;
 
 		/*compare output*/
@@ -928,6 +881,7 @@ void free_input(void * argv_input[], int * input_size[], in_mode in){
 	memset(&input_share_head[0],0x0,sizeof(void *) * ARGV_SIZE);
 	memset(&input_share_trail[0],0x0,sizeof(void *) * ARGV_SIZE);
 }
+
 void free_output(void * argv_output[], int * output_size[]){
 	int out_size = getArgvSize(argv_output);
 
