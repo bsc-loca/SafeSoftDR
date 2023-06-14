@@ -127,13 +127,13 @@ As explained above the compilation of the library is made statically by calling 
 Compile the library using
 
 ``` bash
-	make
+make
 ```
 
 In order to cross-compile the library for risc-v (for example in an x86 computer) use:
 
 ``` bash
-  TARGET=cross make
+TARGET=cross make
 ```
 
 This will call the compilers defined in the [Makefile (lines 2 and 3)](https://gitlab.bsc.es/caos_hw/software-diverse-redundancy-library/-/blob/main/Makefile#L2-L3)
@@ -143,20 +143,20 @@ This will call the compilers defined in the [Makefile (lines 2 and 3)](https://g
 Compile the library using
 
 ``` bash
-	make example
+make example
 ```
 
 In order to cross-compile the library (for example in an x86 computer)
 
 ``` bash
-	TARGET=cross make example
+TARGET=cross make example
 ```
 
 ## Running the example
 To run the example simply execute bin/example on a RISC-V Linux machine with perf support. To enable perf support, add the following line to your kernel configuration:
 
 ``` bash
-	CONFIG_PERF_EVENTS=y
+CONFIG_PERF_EVENTS=y
 ```
 
 ## Prequisites
