@@ -284,91 +284,7 @@ void matrix_test(int it , int s, int b){
     
     
     cout << "[+++CHAINED matrix]" << endl;
-    /*CHAINED*/
-    // mode = 1;
-    // for(int i=0;i<2;i++){
-    //     result n_protect_chain = matrix_test_call(iteration,size[i],mode,0);
-    //     result no_protect_chain  = matrix_test_call(iteration,size[i],mode,1);
-    //     result ni_protect_chain = matrix_test_call(iteration,size[i],mode,2);
-    //     result noi_protect_chain = matrix_test_call(iteration,size[i],mode,3);
-    //     result nio_protect_chain = matrix_test_call(iteration,size[i],mode,4);
     
-    //     cout << 
-    //     "[+] n_protect_chain size:" <<
-    //     size[i] << 
-    //     " passed:" <<
-    //     n_protect_chain.passed <<
-    //     "/" << iteration <<
-    //     " ms_average:" <<
-    //     n_protect_chain.ms_average <<
-    //     " r: " <<
-    //     100 * ( (double) n_protect_chain.ms_average / vector_ms_average[i]  ) <<
-    //     "%" <<
-    //     " ver:" <<
-    //     n_protect_chain.verified << 
-    //     endl;
-
-    //     cout << 
-    //     "[+] no_protect_chain size:" <<
-    //     size[i] << 
-    //     " passed:" <<
-    //     no_protect_chain.passed <<
-    //     "/" << iteration <<
-    //     " ms_average:" <<
-    //     no_protect_chain.ms_average <<
-    //     " r: " <<
-    //     100 * ( (double) no_protect_chain.ms_average / vector_ms_average[i]  ) <<
-    //     "%" <<
-    //     " ver:" <<
-    //     no_protect_chain.verified << 
-    //     endl;
-
-    //     cout << 
-    //     "[+] ni_protect_chain size:" <<
-    //     size[i] << 
-    //     " passed:" <<
-    //     ni_protect_chain.passed <<
-    //     "/" << iteration <<
-    //     " ms_average:" <<
-    //     ni_protect_chain.ms_average <<
-    //     " r: " <<
-    //     100 * ( (double) ni_protect_chain.ms_average / vector_ms_average[i]  ) <<
-    //     "%" <<
-    //     " ver:" <<
-    //     ni_protect_chain.verified << 
-    //     endl;
-
-    //     cout << 
-    //     "[+] noi_protect_chain size:" <<
-    //     size[i] << 
-    //     " passed:" <<
-    //     noi_protect_chain.passed <<
-    //     "/" << iteration <<
-    //     " ms_average:" <<
-    //     noi_protect_chain.ms_average <<
-    //     " r: " <<
-    //     100 * ( (double) noi_protect_chain.ms_average / vector_ms_average[i]  ) <<
-    //     "%" <<
-    //     " ver:" <<
-    //     noi_protect_chain.verified << 
-    //     endl;
-
-    //     cout << 
-    //     "[+] nio_protect_chain size:" <<
-    //     size[i] << 
-    //     " passed:" <<
-    //     nio_protect_chain.passed <<
-    //     "/" << iteration <<
-    //     " ms_average:" <<
-    //     nio_protect_chain.ms_average <<
-    //     " r: " <<
-    //     100 * ( (double) nio_protect_chain.ms_average / vector_ms_average[i]  ) <<
-    //     "%" <<
-    //     " ver:" <<
-    //     nio_protect_chain.verified << 
-    //     endl;
-    // }
-
     mode = 0;
     cout << "[+++DIRECT matrix]" << endl;
     /*DIRECT*/
@@ -517,9 +433,6 @@ void test_demo(){
     int iteration = 10;
     int size = 400; //400
 
-    // int ms_average = matrix_average_execution(iteration, size);
-    // cout   << "[+] average : " << ms_average  <<  " ms" << endl;
-
     int rows = size ; 
     int cols = size ; 
 
@@ -579,11 +492,6 @@ void test_nop_isolated(){
 	pe.exclude_user = 0;
 	pe.precise_ip = 0;
 	pe.pinned = 1;
-	
-	// pe.freq = 1 ;
-	// pe.exclude_idle = 0 ;
-	//pe.task = 1;
-	//pe.read_format = PERF_FORMAT_ID;
 	
 	fd = syscall(__NR_perf_event_open, &pe, getpid(), cpu, -1, 0);
     if (fd == -1) {
