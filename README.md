@@ -11,7 +11,7 @@ Fabio Mazzocchetti, Sergi Alcaide, Francisco Bas, Pedro Benedicte, Guillem Cabo,
 FORECAST 2022 Functional Properties and Dependability in Cyber-Physical Systems Workshop (held jointly with HiPEAC Conference)
 Budapest (Hungary), June 21 2022
 
-```
+``` bib
 @misc{https://doi.org/10.48550/arxiv.2210.00833,
   doi = {10.48550/ARXIV.2210.00833},
   url = {https://arxiv.org/abs/2210.00833},
@@ -32,7 +32,7 @@ In order to protect the function a wrapper of the function needs to be created w
 
 Imagine we want to protect a simple matrix multiplication, the original function has 5 arguments, a pointer for each of the two input matrices (matA, matB), a pointer to the output matrix (matC), the number of rows and columns:
 
-```
+``` cpp
 void matrix_multiply(int * matA, int * matB, int * matC , int rows , int cols){
   for(int i = 0; i < rows; ++i)
     for(int j = 0; j < cols; ++j)
@@ -41,7 +41,8 @@ void matrix_multiply(int * matA, int * matB, int * matC , int rows , int cols){
 }
 ```
 We would create a wrapper just like this one:
-```
+
+``` cpp
 void matrix_multiply_wrapper(void * argv_input[], void * argv_output[] ){
   int *matA = (int * )argv_input[0];
   int *matB = (int * )argv_input[1];
@@ -86,7 +87,8 @@ All the protection functions of the library have the same interface (group of ar
 - An array of integer pointers (each integer identifies the size of the outputs variables)
 
 Following the example of the matrix multiplication:
-```
+
+``` cpp
 void (*ptr)( void *[], void *[]) = &matrix_multiply_wrapper;
 void * argv_input[] = { (void *)matA, (void *)matB, (void *)&rows, (void *)&cols, NULL};
 void * argv_output[] = { (void *)matC, NULL};
@@ -96,14 +98,15 @@ int * output_size[] = {(int *)matCbytes, NULL};
 
 Once we have them, now we only need to decide which typo of protection we want based on [Levels of protection](#levels-of-protection).
 For instance:
-```
+
+``` cpp
 bool pass_flag = protect_default(ptr, argv_input, input_size, argv_output, output_size) ;
 ```
 
 ## Return value
 
 Each function can return two different structs, either a ***boolean*** or a struct named ***pro_res***, defined in [monitor.h](https://gitlab.bsc.es/caos_hw/software-diverse-redundancy-library/-/blob/main/src/monitor.h#L72-L78) that we use to debug since it has stats of the executions:
-```
+``` cpp
 typedef struct pro_res{
 	bool safe; /** 0 if correct and compared, 1 otherwise */
 	long long head_ns; /** Head execution time (in ns) */
@@ -117,17 +120,21 @@ The boolean result is equivalent to the safe field in the struct.
 
 # Compiling
 
-As explained above the compilation of the library is made statically by calling the default g++. 
+As explained above the compilation of the library is made statically by calling the default g++ and by default uses the linux scheduler call to reduce context changing in the workers CPUs.
 
 ### Compiling the library
 
 Compile the library using
 
+``` bash
 	make
+```
 
 In order to cross-compile the library for risc-v (for example in an x86 computer) use:
 
-	TARGET=cross make
+``` bash
+  TARGET=cross make
+```
 
 This will call the compilers defined in the [Makefile (lines 2 and 3)](https://gitlab.bsc.es/caos_hw/software-diverse-redundancy-library/-/blob/main/Makefile#L2-L3)
 
@@ -135,17 +142,22 @@ This will call the compilers defined in the [Makefile (lines 2 and 3)](https://g
 
 Compile the library using
 
+``` bash
 	make example
+```
 
 In order to cross-compile the library (for example in an x86 computer)
 
+``` bash
 	TARGET=cross make example
+```
 
 ## Running the example
 To run the example simply execute bin/example on a RISC-V Linux machine with perf support. To enable perf support, add the following line to your kernel configuration:
 
+``` bash
 	CONFIG_PERF_EVENTS=y
-
+```
 
 ## Prequisites
 
