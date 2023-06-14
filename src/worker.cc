@@ -106,12 +106,7 @@ int worker::getHWInstruction_fd(){
 	pe.exclude_user = 0;
 	pe.precise_ip = 0;
 	pe.pinned = 0;
-	
-	// pe.freq = 1 ;
-	// pe.exclude_idle = 1 ;
-	//pe.task = 1;
-	//pe.read_format = PERF_FORMAT_ID;
-	
+		
 	fd = syscall(__NR_perf_event_open, &pe, this->pid, -1, -1, 0);
 	
 	return fd;
@@ -134,9 +129,6 @@ int worker::getCycles_fd(){
     pe.exclude_idle = 1 ;
     pe.exclude_user = 0  ;
     pe.pinned = 1 ;
-
-	//pe.precise_ip = 2;
-	//pe.read_format = PERF_FORMAT_ID;
 
 	fd = syscall(__NR_perf_event_open, &pe, this->pid, this->cpu, -1, 0);
 
