@@ -43,8 +43,7 @@ void matrix_multiply_wrapper(void * argv_input[] , void * argv_output[] ){
 }
 
 int main(){
-    
-    int size =  500; 
+    int size =  10; 
 
     int rows = size ; 
     int cols = size ; 
@@ -65,9 +64,9 @@ int main(){
     */
     for(int i=0;i<rows;i++){
         for(int j=0;j<cols;j++){
-            matA[i*rows + cols] = 0;
-            matB[i*rows + cols] = 0;
-            matC[i*rows + cols] = 0;
+            matA[i*cols + j] = i+j;
+            matB[i*cols + j] = j-i;
+            matC[i*cols + j] = 0;
         }
     }
 
@@ -77,9 +76,14 @@ int main(){
     int * input_size[] = { (int *)& matAbytes , (int *)&matBbytes , (int *)&rowsbytes , (int *)& colsbytes, NULL};
     int * output_size[] = { (int *)& matCbytes , NULL };
     
-    bool pass_flag = protect_default(ptr , argv_input , input_size , argv_output , output_size ) ; 
+    bool pass_flag = protect_def_inp_out(ptr , argv_input , input_size , argv_output , output_size ) ; 
 
+    if (!pass_flag)
+        printf("Comparison gave an incorrect result. \n");
+    else   
+        printf("Comparison made and results are the same.\n");
     
+
     free((void * )matA);
     free((void * )matB);
     free((void * )matC);

@@ -108,7 +108,7 @@ bool pass_flag = protect_default(ptr, argv_input, input_size, argv_output, outpu
 Each function can return two different structs, either a ***boolean*** or a struct named ***pro_res***, defined in [monitor.h](https://gitlab.bsc.es/caos_hw/software-diverse-redundancy-library/-/blob/main/src/monitor.h#L72-L78) that we use to debug since it has stats of the executions:
 ``` cpp
 typedef struct pro_res{
-	bool safe; /** 0 if correct and compared, 1 otherwise */
+	bool safe; /** 1 if correct and compared, 0 otherwise */
 	long long head_ns; /** Head execution time (in ns) */
 	long long trail_ns; /** Trail execution time (in ns) */
 	long long head_instr; /** Number of instructions commited during the activation by head core */

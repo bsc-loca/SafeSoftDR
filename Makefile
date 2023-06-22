@@ -57,7 +57,7 @@ libactiveinstr: src/monitor.cc src/monitor.h src/worker.cc src/worker.h
 libdemo: src/monitor.cc src/monitor.h src/worker.cc src/worker.h
 	mkdir -p $(OBJ_FOLDER)
 	$(CC) $(OPTIONS) -Ddemo -c -o $(OBJ_FOLDER)/monitor.o $(SRC_FOLDER)/monitor.cc -I$(SRC_FOLDER)
-	$(CC) $(OPTIONS) -c -o $(OBJ_FOLDER)/worker.o $(SRC_FOLDER)/worker.cc -I$(SRC_FOLDER)
+	$(CC) $(OPTIONS) -Ddemo -c -o $(OBJ_FOLDER)/worker.o $(SRC_FOLDER)/worker.cc -I$(SRC_FOLDER)
 	$(AR) rvs $(OBJ_FOLDER)/lib.a $(OBJ_FOLDER)/monitor.o $(OBJ_FOLDER)/worker.o
 
 example:lib

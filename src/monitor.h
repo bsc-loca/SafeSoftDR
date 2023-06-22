@@ -33,13 +33,19 @@
 #define AND &&
 #define OR ||
 
+#ifdef demo
+	#define MATRIX_SIZE 10
+#endif
+
 #define ARGV_SIZE 64
 /**
 *	Input and Output data structure
 */
 void * input_share_head[ARGV_SIZE];
 void * input_share_trail[ARGV_SIZE];
+// Result pointer for Head Worker
 void * out_share_head[ARGV_SIZE] ;
+// Result pinter for Trail Worker
 void * out_share_trail[ARGV_SIZE] ;
 
 /**
@@ -125,6 +131,9 @@ void free_input(void * argv_input[], int * input_size[], in_mode in);
 void free_output(void * argv_output[], int * output_size[]);
 void check_perf_open(worker * head, worker * trail);
 void read_add_reset(long long * instr, worker * head, worker * trail);
+#ifdef demo
+void PrintMatrix(int * matrix);
+#endif
 
 
 /*impl*/
@@ -177,14 +186,24 @@ int getArgvSize( void * argv[]){
 bool isResultsEqual(void * argv_output[],int * output_size[]){
 	
 	int argv_size = getArgvSize(argv_output);
-	bool flag = true ;
+	bool flag = true;
 
 
 	for(int i=0;i<argv_size && i<ARGV_SIZE && flag;i++){
 		flag = isMemoryEqual(out_share_head[i], out_share_trail[i], *output_size[i]);
+		#ifdef demo
+		int * head_matrix = (int *)out_share_head[i];
+		int * trail_matrix = (int *)out_share_trail[i];
+		for (int j = 0; j < (*output_size[i])/sizeof(int); j++){
+			printf("%d = %d\n", (int) head_matrix[j], trail_matrix[j]);
+			printf("Resultat de moment correcte\n");
+		}
+		if (!flag)
+			printf("ERROR\n");
+		#endif
 	}
 
-	return flag ; 
+	return flag; 
 }
 
 void check_perf_open(worker * head, worker * trail){
@@ -196,6 +215,18 @@ void check_perf_open(worker * head, worker * trail){
 		exit(EXIT_FAILURE);
 	}
 }
+
+#ifdef demo
+void PrintMatrix(int * matrix){
+	printf("Starting Matrix:\n");
+	for (int i = 0; i < MATRIX_SIZE; ++i){
+		for (int j = 0; j < MATRIX_SIZE; ++j){
+			printf(" %d ", matrix[i * MATRIX_SIZE + j]);
+		}
+		printf("\n");
+	}
+}
+#endif
 
 std::string to_formatted(long long num);
 

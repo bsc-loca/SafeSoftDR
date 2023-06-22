@@ -139,8 +139,8 @@ pro_res protect_real_waitpid(void  (* function )(void * [] ,  void * [] ),void *
 	*/
 
 	pid_t monitor_pid = getpid(); 
-	pid_t head_pid = 0 ;
-	pid_t trail_pid = 0 ; 
+	pid_t head_pid = 1 ;
+	pid_t trail_pid = 1 ; 
 
 	/*
 	*   WORKER
@@ -151,12 +151,11 @@ pro_res protect_real_waitpid(void  (* function )(void * [] ,  void * [] ),void *
 	worker trail(trail_t);
 
 	monitor.lockCPU(0);
-
-	head_pid = fork();	
+	head_pid = fork();
 	if(head_pid == 0 ) work( &head,shmem,function,input_share_head,out_share_head);
 	
-	trail_pid = fork();
-	if(trail_pid == 0 ) work( &trail,shmem,function,input_share_head,out_share_head);
+	if (head_pid != 0) trail_pid = fork(); //Only performs the fork the parent of them (monitor process)
+	if (trail_pid == 0 ) work( &trail,shmem,function,input_share_trail,out_share_trail);
 	/*
 	* MONITOR CODE SECTION
 	*/
@@ -450,8 +449,8 @@ pro_res protect_real_waitpid(void  (* function )(void * [] ,  void * [] ),void *
 
 	long long trail_ns = (time_shared[2].tv_sec - time_shared[0].tv_sec ) * BILLION + 
 												(time_shared[2].tv_nsec - time_shared[0].tv_nsec );
-
-	bool good = false;
+	//We mark it as good since we have not yet perform the comparison
+	bool good = true;
 	
 	head.disablePMC_at(head.getFD(instructions));
 	trail.disablePMC_at(trail.getFD(instructions));
@@ -745,7 +744,9 @@ bool protect_def_inp_out(void  (* function )(void * [], void * [] ), void * argv
 		/*create general*/
         /*create output*/
 		i_stack = 2;
-
+		#ifdef demo
+			printf("This is the demo of SafeSoftDR\n");
+		#endif
 		clean_sh_memory();
 		/*sh mem*/
 		shmem = create_shared_memory(128);
@@ -754,11 +755,13 @@ bool protect_def_inp_out(void  (* function )(void * [], void * [] ), void * argv
 	}
 
 	bool safe = protect_def_inp(function,argv_input,input_size,argv_output,output_size);
-
 	/*protect_nio*/
 	if(i_stack == 2){
 		i_stack = -1;
-
+		#ifdef demo
+		PrintMatrix((int *) out_share_head[0]);
+		PrintMatrix((int *) out_share_trail[0]);
+		#endif
 		/*compare output*/
 		safe = isResultsEqual(argv_output,output_size);
 		/*free general*/
@@ -933,7 +936,7 @@ void work( worker * w, void * shmem , void  (* function )(void * [], void * [] )
 	w->setScheduler(SCHEDULER_START);
 	((unsigned char *)shmem)[shemm_index[0]] = 0x1;
 	while(( ((unsigned char *)shmem)[shemm_index[1]]) == 0x0 );
-	(*function)(input_share_head,out_share_head);
+	(*function)(argv_input,argv_output);
 	w->setScheduler(SCHEDULER_END);
 	exit(0);
 
