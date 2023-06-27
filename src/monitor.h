@@ -191,7 +191,8 @@ bool isResultsEqual(void * argv_output[],int * output_size[]){
 
 	for(int i=0;i<argv_size && i<ARGV_SIZE && flag;i++){
 		flag = isMemoryEqual(out_share_head[i], out_share_trail[i], *output_size[i]);
-		#ifdef demo
+		#ifdef demo 
+		#ifdef debug
 		int * head_matrix = (int *)out_share_head[i];
 		int * trail_matrix = (int *)out_share_trail[i];
 		for (int j = 0; j < (*output_size[i])/sizeof(int); j++){
@@ -200,6 +201,7 @@ bool isResultsEqual(void * argv_output[],int * output_size[]){
 		}
 		if (!flag)
 			printf("ERROR\n");
+		#endif
 		#endif
 	}
 

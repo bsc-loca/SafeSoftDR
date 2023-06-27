@@ -168,6 +168,7 @@ pro_res protect_real_waitpid(void (*function)(void *[], void *[]), void *argv_in
 		trail_pid = fork(); // Only performs the fork the parent of them (monitor process)
 	if (trail_pid == 0)
 		work(&trail, shmem, function, input_share_trail, out_share_trail);
+		
 	/*
 	 * MONITOR CODE SECTION
 	 */
@@ -186,7 +187,7 @@ pro_res protect_real_waitpid(void (*function)(void *[], void *[]), void *argv_in
 	 * hv_tv[0] HEAD
 	 * hv_tv[1] TRAIL
 	 */
-	bool hv_tv[2];
+	bool hv_tv[2]; //true if finished
 	memset((void *)hv_tv, 0b0, sizeof(bool) * 2);
 	unsigned short *hv_tv_ptr = (unsigned short *)&hv_tv[0];
 
@@ -250,16 +251,19 @@ pro_res protect_real_waitpid(void (*function)(void *[], void *[]), void *argv_in
 	int c = 0;
 	while (1)
 	{
-
+		//Check status of trail
 		waitpid(trail_pid, &trail_status, WNOHANG);
+		//WIFEEXITED() returns true if child terminated normally
 		if (not hv_tv[1] AND WIFEXITED(trail_status))
 		{
+			//update status on hv_tv (set to true)
 			endWorker(&time_shared[2], &hv_tv[1]);
 		}
-
+		//Check status of head
 		waitpid(head_pid, &head_status, WNOHANG);
 		if (not hv_tv[0] AND WIFEXITED(head_status))
 		{
+			//update status on hv_tv (set to true)
 			endWorker(&time_shared[1], &hv_tv[0]);
 		}
 
@@ -426,20 +430,20 @@ pro_res protect_real_waitpid(void (*function)(void *[], void *[]), void *argv_in
 			}
 		}
 		else
-		{ // HEAD Finished
+		{ // HEAD Finished ?
 			waitpid(head_pid, &head_status, WNOHANG);
 			if (not hv_tv[0] AND WIFEXITED(head_status))
 			{ // check if finished correctly
 				endWorker(&time_shared[1], &hv_tv[0]);
 			}
-			else
+			else if (!WIFEXITED(head_status))
 			{ // HEAD did not finish correctly
 				res.safe = false;
-				cout << "TIMEOUT reached for HEAD process" << endl << std::flush;
+				cout << "TIMEOUT reached for HEAD proces" << endl << std::flush;
 			}
 		}
 		/*
-		 * both death
+		 * both finished
 		 */
 		if (hv_tv[0] AND hv_tv[1])
 		{
@@ -472,16 +476,16 @@ pro_res protect_real_waitpid(void (*function)(void *[], void *[]), void *argv_in
 
 	long long trail_ns = (time_shared[2].tv_sec - time_shared[0].tv_sec) * BILLION +
 						 (time_shared[2].tv_nsec - time_shared[0].tv_nsec);
-	// We mark it as good since we have not yet perform the comparison
-	bool good = true;
-
+	
 	head.disablePMC_at(head.getFD(instructions));
 	trail.disablePMC_at(trail.getFD(instructions));
 
 	close(head.getFD(instructions));
 	close(trail.getFD(instructions));
 
-	res.safe = good;
+	// If arrived here execution correct
+	// We mark it as good since we have not yet perform the comparison
+	res.safe = true; //if we arrive here means all okey
 	res.head_ns = head_ns;
 	res.trail_ns = trail_ns;
 	res.head_instr = instructions_head_trail[0];
@@ -1000,8 +1004,7 @@ void work(worker *w, void *shmem, void (*function)(void *[], void *[]), void *ar
 	w->lockCPU(cpu);
 	w->setScheduler(SCHEDULER_START);
 	((unsigned char *)shmem)[shemm_index[0]] = 0x1;
-	while ((((unsigned char *)shmem)[shemm_index[1]]) == 0x0)
-		;
+	while ((((unsigned char *)shmem)[shemm_index[1]]) == 0x0);
 	(*function)(argv_input, argv_output);
 	w->setScheduler(SCHEDULER_END);
 	exit(0);
