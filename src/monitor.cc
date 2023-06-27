@@ -260,9 +260,7 @@ pro_res protect_real_waitpid(void  (* function )(void * [] ,  void * [] ),void *
 					//no progress check timeout:
 					//if timeout bigger than threshold kill process message timeout and exit
 					if (Now - HeadTimeoutCounter >= TIMEOUT_THRESHOLD){
-						#ifdef debug
-						cout << "TIMEOUT reached for HEAD process" << endl;
-						#endif
+						cout << "TIMEOUT reached for HEAD process" << endl << std::flush;
 						// TODO KILL Process
 					}
 					//else do nothing
@@ -274,9 +272,7 @@ pro_res protect_real_waitpid(void  (* function )(void * [] ,  void * [] ),void *
 					//no progress check timeout:
 					//if timeout bigger than threshold kill process message timeout and exit
 					if (Now - TrailTimeoutCounter >= TIMEOUT_THRESHOLD){
-						#ifdef debug
-						cout << "TIMEOUT reached for TRAIL process" << endl;
-						#endif
+						cout << "TIMEOUT reached for TRAIL process" << endl << std::flush;
 						// TODO KILL Process
 					}
 					//else do nothing
@@ -331,9 +327,7 @@ pro_res protect_real_waitpid(void  (* function )(void * [] ,  void * [] ),void *
 							//no progress check timeout:
 							//if timeout bigger than threshold kill process message timeout and exit
 							if (Now - HeadTimeoutCounter >= TIMEOUT_THRESHOLD){
-								#ifdef debug
-								cout << "TIMEOUT reached for HEAD process" << endl;
-								#endif
+								cout << "TIMEOUT reached for HEAD process" << endl << std::flush;
 								// TODO Kill process
 							}
 						//else do nothing
@@ -396,18 +390,19 @@ pro_res protect_real_waitpid(void  (* function )(void * [] ,  void * [] ),void *
 				
 				}
 				
-			}else{
+			}
+			else{
 				//HEAD Finished 
 					
-							waitpid(head_pid, &head_status, WNOHANG);
-			if ( not hv_tv[0] AND WIFEXITED(head_status)){			
+			waitpid(head_pid, &head_status, WNOHANG);
+			if ( not hv_tv[0] AND WIFEXITED(head_status)){	
 				endWorker(&time_shared[1] , &hv_tv[0]);
 			}
 
-				//HEAD Finished (hv_tv[0] == TRUE)
-												#ifdef debug
-								cout << "TIMEOUT reached for HEAD process" << endl;
-								#endif
+			//HEAD Finished (hv_tv[0] == TRUE)
+			#ifdef debug
+				cout << "TIMEOUT reached for HEAD process" << endl std::flush;
+			#endif
 							
 			}
 			
